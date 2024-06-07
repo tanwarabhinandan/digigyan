@@ -9,7 +9,7 @@ const bookRouter = express.Router();
 
 const upload = multer({
   dest: path.resolve(__dirname, "../../public/data/uploads"),
-  limits: { fileSize: 3e7 }, // 3e7 - 30 MB
+  limits: { fileSize: 1e7 }, // 1e7 - 10 MB (Cloudinary file upload restriction)
 });
 
 //Routes

@@ -4,12 +4,13 @@ import path from "node:path";
 import createHttpError from "http-errors";
 import bookModel from "./bookModel";
 import fs from "node:fs";
+import { Authrequest } from "../middlewares/authenticate";
 
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
   const { title, genre } = req.body;
 
   // req.files - Uploaded Files Details
-  console.log("Uploaded Files Info: ", req.files);
+  //   console.log("Uploaded Files Info: ", req.files);
 
   // to get file information from req obj
   const files = req.files as { [fileName: string]: Express.Multer.File[] };
@@ -33,7 +34,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
         format: coverImageMimeType,
       }
     );
-    console.log("Image Upload Result: ", imageFileUploadResult);
+    // console.log("Image Upload Result: ", imageFileUploadResult);
 
     //For Book Upload
     const bookMimeType = files.file[0].mimetype.split("/").at(-1);
@@ -54,15 +55,16 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
         format: bookMimeType,
       }
     );
-    console.log("Book Upload Result: ", bookFileUploadResult);
-    //@ts-ignore
-    console.log("userId", req.userId);
+    // console.log("Book Upload Result: ", bookFileUploadResult);
+    // //@ts-ignore
+    // console.log("userId", req.userId);
 
+    const _req = req as Authrequest;
     //Creating new Book in Database
     const newBook = await bookModel.create({
       title,
       genre,
-      author: "666236b8064c04d267ed5deb",
+      author: _req.userId,
       coverImage: imageFileUploadResult.secure_url,
       file: bookFileUploadResult.secure_url,
     });

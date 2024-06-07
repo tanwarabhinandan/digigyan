@@ -76,8 +76,10 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     // Response -
-    res.json({
+    res.status(201).json({
       message: "File uploaded successfully on cloudinary",
+      "Book Name": newBook.title,
+      ID: newBook._id,
     });
   } catch (err) {
     console.log(err);

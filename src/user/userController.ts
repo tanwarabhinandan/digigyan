@@ -10,8 +10,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   const { name, email, password } = req.body;
   // Validation
   if (!name || !email || !password) {
-    const error = createHttpError(400, "All fields are required");
-    return next(error);
+    return next(createHttpError(400, "All fields are required"));
   }
 
   // Database call
@@ -25,7 +24,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
       return next(error);
     }
   } catch (err) {
-    return createHttpError(500, "Error while finding user on Database");
+    return next(createHttpError(500, "Error while finding user on Database"));
   }
 
   let newUser: User;
@@ -39,7 +38,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
       password: hashedPassword,
     });
   } catch (err) {
-    return createHttpError(500, "Error While Hashing Password");
+    return next(createHttpError(500, "Error While Hashing Password"));
   }
 
   let token: string;
@@ -51,12 +50,12 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
       algorithm: "HS256",
     });
   } catch (err) {
-    return createHttpError(500, "Error While Hashing Password");
+    return next(createHttpError(500, "Error While generating JWT token"));
   }
 
   //Logic - Process
 
-  //Response
+  //Response - User Creation
   res.status(201).json({
     message: "User Created..!!!",
     id: newUser._id,
@@ -64,4 +63,51 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-export { createUser };
+const loginUser = async (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+
+  // Validation
+  if (!email || !password) {
+    return next(createHttpError(400, "All field are required"));
+  }
+
+  let user;
+  try {
+    // Database call - Finding user
+    user = await userModel.findOne({ email });
+    if (!user) {
+      return next(createHttpError(404, "User Not Found"));
+    }
+  } catch (err) {
+    return next(createHttpError(500, "Error fatching user from database"));
+  }
+
+  // user authentication - compairing password from DB
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    return next(createHttpError(400, "Username or Password incorrect"));
+  }
+
+  // Create access token
+  let token: string;
+  try {
+    // token generation - JWT
+
+    token = sign({ sub: user._id }, config.jwtSecret as string, {
+      expiresIn: "7d",
+      algorithm: "HS256",
+    });
+  } catch (err) {
+    return next(createHttpError(500, "Error While generating JWT token"));
+  }
+
+  res.status(200).json({
+    message: "User Loged In",
+    id: user._id,
+    accessToken: token,
+  });
+};
+
+export { createUser, loginUser };

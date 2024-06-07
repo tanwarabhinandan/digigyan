@@ -23,7 +23,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
       "../../public/data/uploads",
       imageFileName
     );
-    console.log(imageFileName);
+    // console.log(imageFileName);
     // cloudinary File upload
     const imageFileUploadResult = await cloudinary.uploader.upload(
       imageFilePath,
@@ -55,9 +55,10 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
       }
     );
     console.log("Book Upload Result: ", bookFileUploadResult);
+    //@ts-ignore
+    console.log("userId", req.userId);
 
     //Creating new Book in Database
-
     const newBook = await bookModel.create({
       title,
       genre,

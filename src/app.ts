@@ -1,10 +1,18 @@
 import express from "express";
+import cors from "cors";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
 import userRouter from "./user/userRouter";
 import bookRouter from "./book/bookRouter";
+import { config } from "./config/config";
 // import createHttpError from "http-errors";
 
 const app = express();
+
+app.use(
+  cors({
+    origin: config.frontendDomain,
+  })
+);
 
 // to parse json data
 app.use(express.json());

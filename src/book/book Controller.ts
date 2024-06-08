@@ -204,7 +204,11 @@ const listBooks = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 // list single book
-const singleBook = async (req: Request, res: Response, next: NextFunction) => {
+const GetSingleBook = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const bookId = req.params.bookId;
   try {
     const book = await bookModel.findById({
@@ -220,4 +224,70 @@ const singleBook = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { createBook, updateBook, listBooks, singleBook };
+// Delete single book
+const deleteSingleBook = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const bookId = req.params.bookId;
+  try {
+    const book = await bookModel.findById({
+      _id: bookId,
+    });
+    if (!book) {
+      return next(createHttpError(404, "Book not found"));
+    }
+
+    // Check Access
+    const _req = req as Authrequest;
+    if (book.author.toString() !== _req.userId) {
+      return next(createHttpError(404, "Not authorized for Update"));
+    }
+
+    const bookCoverImageSplit = book.coverImage.split("/");
+    const imagePublicId =
+      bookCoverImageSplit.at(-2) +
+      "/" +
+      bookCoverImageSplit.at(-1)?.split(".").at(-2);
+
+    // console.log(bookCoverImageSplit);
+    // console.log(imagePublicId);
+
+    const bookFilesplit: string[] = book.file.split("/");
+    const filePublicId = ((bookFilesplit.at(-2) as string) +
+      "/" +
+      bookFilesplit.at(-1)) as string;
+
+    // console.log(filePublicId);
+
+    //deleting files from cloudinary (image and pdf)
+    try {
+      await cloudinary.uploader.destroy(imagePublicId);
+      await cloudinary.uploader.destroy(filePublicId, {
+        resource_type: "raw",
+      });
+    } catch (err) {
+      return next(
+        createHttpError(500, "Error while deleting image/pdf on storage")
+      );
+    }
+
+    // delete record fromDatabase
+    try {
+      await bookModel.deleteOne({
+        _id: bookId,
+      });
+    } catch (err) {
+      return next(
+        createHttpError(500, "Error while deleting book on Database")
+      );
+    }
+
+    return res.sendStatus(204);
+  } catch (err) {
+    return next(createHttpError(500, "Error while fetching book"));
+  }
+};
+
+export { createBook, updateBook, listBooks, GetSingleBook, deleteSingleBook };

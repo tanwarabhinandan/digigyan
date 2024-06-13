@@ -8,7 +8,7 @@ import { Authrequest } from "../middlewares/authenticate";
 
 // Create Book
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
-  const { title, genre } = req.body;
+  const { title, genre, description } = req.body;
 
   // req.files - Uploaded Files Details
   //   console.log("Uploaded Files Info: ", req.files);
@@ -65,6 +65,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
     const newBook = await bookModel.create({
       title,
       genre,
+      description,
       author: _req.userId,
       coverImage: imageFileUploadResult.secure_url,
       file: bookFileUploadResult.secure_url,
@@ -195,7 +196,7 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
 const listBooks = async (req: Request, res: Response, next: NextFunction) => {
   try {
     //todo: add pagination
-    const books = await bookModel.find();
+    const books = await bookModel.find().populate("author", "name");
 
     res.json({ books });
   } catch (err) {
@@ -211,9 +212,11 @@ const GetSingleBook = async (
 ) => {
   const bookId = req.params.bookId;
   try {
-    const book = await bookModel.findById({
-      _id: bookId,
-    });
+    const book = await bookModel
+      .findById({
+        _id: bookId,
+      })
+      .populate("author", "name");
     if (!book) {
       return next(createHttpError(404, "Book not found"));
     }

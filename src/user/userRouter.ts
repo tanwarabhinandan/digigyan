@@ -5,7 +5,7 @@ const userRouter = express.Router();
 
 //Routes
 
-userRouter.post("/resgister", createUser);
+userRouter.post("/register", createUser);
 
 userRouter.post("/login", loginUser);
 
